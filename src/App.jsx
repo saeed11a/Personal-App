@@ -9,7 +9,12 @@ import ScrollToTop from './components/ScrollToTop';
 import { Navigate } from 'react-router-dom';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Layout from '@/components/Layout';
+import { SyncProvider } from '@/lib/SyncContext';
 import Login from '@/pages/Login';
+import PinUnlock from '@/pages/PinUnlock';
+import PinSetup from '@/pages/PinSetup';
+import PinChange from '@/pages/PinChange';
+import PinNotIssued from '@/pages/PinNotIssued';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
@@ -31,6 +36,10 @@ import Kharcha from '@/pages/Kharcha';
 import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
 import RecycleBin from '@/pages/RecycleBin';
+import Labour from '@/pages/Labour';
+import DatabaseCenter from '@/pages/DatabaseCenter';
+import Users from '@/pages/Users';
+import RequirePermission from '@/components/RequirePermission';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -55,34 +64,42 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Render the main app
+  // Render the main app. Every ERP route states the module it belongs to, so the
+  // same rule that hides a menu entry also blocks a typed-in URL.
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/unlock" element={<PinUnlock />} />
+      <Route path="/setup-pin" element={<PinSetup />} />
+      <Route path="/change-pin" element={<PinChange />} />
+      <Route path="/pin-not-issued" element={<PinNotIssued />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/raw-stock" element={<RawStock />} />
-          <Route path="/raw-stock/:slug" element={<RawCategoryPage />} />
-          <Route path="/ready-shoes" element={<ReadyShoes />} />
-          <Route path="/articles" element={<Articles />} />
-          <Route path="/production" element={<Production />} />
-          <Route path="/purchases" element={<Purchases />} />
-          <Route path="/invoices" element={<Invoices />} />
-          <Route path="/invoices/new" element={<InvoiceNew />} />
-          <Route path="/sales" element={<Sales />} />
-          <Route path="/customers" element={<Customers />} />
-          <Route path="/suppliers" element={<Suppliers />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/roznamcha" element={<Roznamcha />} />
-          <Route path="/kharcha" element={<Kharcha />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/recycle-bin" element={<RecycleBin />} />
+          <Route path="/" element={<RequirePermission module="dashboard"><Dashboard /></RequirePermission>} />
+          <Route path="/raw-stock" element={<RequirePermission module="raw_stock"><RawStock /></RequirePermission>} />
+          <Route path="/raw-stock/:slug" element={<RequirePermission module="raw_stock"><RawCategoryPage /></RequirePermission>} />
+          <Route path="/ready-shoes" element={<RequirePermission module="ready_shoes"><ReadyShoes /></RequirePermission>} />
+          <Route path="/articles" element={<RequirePermission module="articles"><Articles /></RequirePermission>} />
+          <Route path="/production" element={<RequirePermission module="production"><Production /></RequirePermission>} />
+          <Route path="/purchases" element={<RequirePermission module="purchase"><Purchases /></RequirePermission>} />
+          <Route path="/labour" element={<RequirePermission module="labour"><Labour /></RequirePermission>} />
+          <Route path="/invoices" element={<RequirePermission module="invoices"><Invoices /></RequirePermission>} />
+          <Route path="/invoices/new" element={<RequirePermission module="invoices" action="add"><InvoiceNew /></RequirePermission>} />
+          <Route path="/sales" element={<RequirePermission module="sales"><Sales /></RequirePermission>} />
+          <Route path="/customers" element={<RequirePermission module="customers"><Customers /></RequirePermission>} />
+          <Route path="/suppliers" element={<RequirePermission module="suppliers"><Suppliers /></RequirePermission>} />
+          <Route path="/payments" element={<RequirePermission module="payments"><Payments /></RequirePermission>} />
+          <Route path="/roznamcha" element={<RequirePermission module="roznamcha"><Roznamcha /></RequirePermission>} />
+          <Route path="/kharcha" element={<RequirePermission module="kharcha"><Kharcha /></RequirePermission>} />
+          <Route path="/reports" element={<RequirePermission module="reports"><Reports /></RequirePermission>} />
+          <Route path="/settings" element={<RequirePermission module="settings"><Settings /></RequirePermission>} />
+          <Route path="/recycle-bin" element={<RequirePermission module="recycle_bin"><RecycleBin /></RequirePermission>} />
+          <Route path="/database-center" element={<RequirePermission module="database_center"><DatabaseCenter /></RequirePermission>} />
+          <Route path="/users" element={<RequirePermission module="users"><Users /></RequirePermission>} />
         </Route>
       </Route>
 
@@ -97,10 +114,12 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <ScrollToTop />
-          <AuthenticatedApp />
-        </Router>
+        <SyncProvider>
+          <Router>
+            <ScrollToTop />
+            <AuthenticatedApp />
+          </Router>
+        </SyncProvider>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>

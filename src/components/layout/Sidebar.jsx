@@ -5,9 +5,10 @@ import {
   BookOpen,
   Boxes,
   Coins,
+  Database,
   Factory,
   FileText,
-  Footprints,
+  HardDriveDownload,
   Layers,
   LayoutDashboard,
   PackageCheck,
@@ -16,61 +17,85 @@ import {
   Settings,
   ShoppingCart,
   Truck,
+  UserCog,
   Users,
   Wallet,
+  Wrench,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/lib/usePermissions";
 
+// Every entry names the module whose access level hides it. The level comes from the
+// database (user_permissions, read by usePermissions) — the menu matches what RLS
+// will allow, it is not the thing that secures it. The same module gates the route
+// in App.jsx, so a typed-in URL cannot reach a module the menu hides.
 const GROUPS = [
   {
     label: "Overview",
-    items: [{ label: "Dashboard", path: "/", icon: LayoutDashboard }],
+    items: [{ label: "Dashboard", path: "/", icon: LayoutDashboard, module: "dashboard" }],
   },
   {
     label: "Stock",
     items: [
-      { label: "Raw Stock", path: "/raw-stock", icon: Boxes },
-      { label: "Ready Shoes", path: "/ready-shoes", icon: PackageCheck },
-      { label: "Articles", path: "/articles", icon: Layers },
+      { label: "Raw Stock", path: "/raw-stock", icon: Boxes, module: "raw_stock" },
+      { label: "Ready Shoes", path: "/ready-shoes", icon: PackageCheck, module: "ready_shoes" },
+      { label: "Articles", path: "/articles", icon: Layers, module: "articles" },
     ],
   },
   {
     label: "Production",
     items: [
-      { label: "Production", path: "/production", icon: Factory },
-      { label: "Purchase", path: "/purchases", icon: ShoppingCart },
+      { label: "Production", path: "/production", icon: Factory, module: "production" },
+      { label: "Labour", path: "/labour", icon: Wrench, module: "labour" },
+      { label: "Purchase", path: "/purchases", icon: ShoppingCart, module: "purchase" },
     ],
   },
   {
     label: "Sales",
     items: [
-      { label: "Invoices", path: "/invoices", icon: FileText },
-      { label: "Sales", path: "/sales", icon: Receipt },
-      { label: "Customers", path: "/customers", icon: Users },
+      { label: "Invoices", path: "/invoices", icon: FileText, module: "invoices" },
+      { label: "Sales", path: "/sales", icon: Receipt, module: "sales" },
+      { label: "Customers", path: "/customers", icon: Users, module: "customers" },
     ],
   },
   {
     label: "Accounts",
     items: [
-      { label: "Suppliers", path: "/suppliers", icon: Truck },
-      { label: "Payments", path: "/payments", icon: Wallet },
-      { label: "Roznamcha", path: "/roznamcha", icon: BookOpen },
-      { label: "Kharcha", path: "/kharcha", icon: Coins },
+      { label: "Suppliers", path: "/suppliers", icon: Truck, module: "suppliers" },
+      { label: "Payments", path: "/payments", icon: Wallet, module: "payments" },
+      { label: "Roznamcha", path: "/roznamcha", icon: BookOpen, module: "roznamcha" },
+      { label: "Kharcha", path: "/kharcha", icon: Coins, module: "kharcha" },
     ],
   },
   {
     label: "System",
     items: [
-      { label: "Reports", path: "/reports", icon: BarChart3 },
-      { label: "Settings", path: "/settings", icon: Settings },
-      { label: "Recycle Bin", path: "/recycle-bin", icon: Recycle },
+      { label: "Reports", path: "/reports", icon: BarChart3, module: "reports" },
+      { label: "Settings", path: "/settings", icon: Settings, module: "settings" },
+      { label: "Recycle Bin", path: "/recycle-bin", icon: Recycle, module: "recycle_bin" },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      { label: "Database Center", path: "/database-center", icon: Database, module: "database_center" },
+      { label: "Backup & Restore", path: "/database-center?tab=backup", icon: HardDriveDownload, module: "backup" },
+      { label: "Users", path: "/users", icon: UserCog, module: "users" },
     ],
   },
 ];
 
 export default function Sidebar({ mobileOpen, onClose }) {
+  const { can } = usePermissions();
+
+  // A module the account cannot view is not offered; an empty group disappears with it.
+  const groups = GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.module || can(item.module)),
+  })).filter((group) => group.items.length > 0);
+
   return (
     <>
       <div
@@ -88,9 +113,12 @@ export default function Sidebar({ mobileOpen, onClose }) {
       >
         <div className="flex items-center justify-between px-5 py-6">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-brand-foreground shadow-lg">
-              <Footprints className="h-5 w-5" aria-hidden="true" />
-            </span>
+            <img
+              src="/hiker-logo.png"
+              alt="HIKER+"
+              className="h-10 w-10 shrink-0 rounded-xl bg-white object-contain shadow-lg"
+            />
+            
             <div className="leading-tight">
               <p className="font-heading text-lg font-extrabold tracking-tight text-white">HIKER</p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sidebar-foreground/60">
@@ -110,7 +138,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
         </div>
 
         <nav className="flex-1 space-y-4 px-3 pb-4">
-          {GROUPS.map((group) => (
+          {groups.map((group) => (
             <div key={group.label}>
               <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-sidebar-foreground/40">
                 {group.label}

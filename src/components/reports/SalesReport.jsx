@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ReportShell from "@/components/reports/ReportShell";
 import StatusPill, { statusTone } from "@/components/StatusPill";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE } from "@/lib/recycle";
 import { invoiceStats } from "@/lib/analytics";
 import { useSettings } from "@/lib/useSettings";
@@ -25,7 +25,7 @@ export default function SalesReport() {
       if (to) query.invoice_date.$lte = to;
     }
     Promise.all([
-      base44.entities.Invoice.filter(query, { sort: "-invoice_date", limit: 200 }),
+      db.Invoice.filter(query, { sort: "-invoice_date", limit: 200 }),
       invoiceStats({ from, to }).catch(() => null),
     ]).then(([page, totals]) => {
       if (!active) return;

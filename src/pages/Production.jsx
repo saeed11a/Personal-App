@@ -5,11 +5,12 @@ import KpiCard from "@/components/KpiCard";
 import DataTable from "@/components/DataTable";
 import RowActions from "@/components/RowActions";
 import DeleteDialog from "@/components/DeleteDialog";
+import RecordDetailDialog from "@/components/RecordDetailDialog";
 import ExportButtons from "@/components/ExportButtons";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import { Button } from "@/components/ui/button";
 import ProductionForm from "@/components/forms/ProductionForm";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE, softDelete } from "@/lib/recycle";
 import { useSettings } from "@/lib/useSettings";
 import { num, pairs, shortDate } from "@/lib/format";
@@ -24,6 +25,7 @@ export default function Production() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [viewing, setViewing] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -33,7 +35,7 @@ export default function Production() {
       if (from) query.production_date.$gte = from;
       if (to) query.production_date.$lte = to;
     }
-    const page = await base44.entities.ProductionEntry.filter(query, { sort: "-production_date", limit: 100 });
+    const page = await db.ProductionEntry.filter(query, { sort: "-production_date", limit: 100 });
     setRows(page?.items || []);
     setLoading(false);
   };
@@ -123,9 +125,18 @@ export default function Production() {
           loading={loading}
           emptyLabel="No production recorded yet"
           emptyHint="Start with New production to issue uppers and receive cartons."
-          actions={(row) => <RowActions onDelete={() => setPendingDelete(row)} />}
+          actions={(row) => <RowActions onView={() => setViewing(row)} onDelete={() => setPendingDelete(row)} />}
         />
       </div>
+
+      <RecordDetailDialog
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title="Production run"
+        subtitle={viewing?.article_code}
+        columns={columns}
+        row={viewing}
+      />
 
       <ProductionForm open={formOpen} onOpenChange={setFormOpen} onSaved={load} settings={settings} />
       <DeleteDialog

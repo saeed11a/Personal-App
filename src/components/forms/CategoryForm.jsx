@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -72,8 +72,8 @@ export default function CategoryForm({ open, onOpenChange, initial, onSaved }) {
           })),
         is_deleted: false,
       };
-      if (initial?.id) await base44.entities.RawCategory.update(initial.id, payload);
-      else await base44.entities.RawCategory.create(payload);
+      if (initial?.id) await db.RawCategory.update(initial.id, payload);
+      else await db.RawCategory.create(payload);
       onSaved?.();
       onOpenChange(false);
     } catch (err) {

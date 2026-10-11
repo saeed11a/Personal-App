@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +17,7 @@ export default function PurchaseForm({ open, onOpenChange, onSaved, customCatego
 
   useEffect(() => {
     if (!open) return;
-    base44.entities.Supplier.filter({ is_deleted: { $ne: true } }, { sort: "name", limit: 200 }).then((page) =>
+    db.Supplier.filter({ is_deleted: { $ne: true } }, { sort: "name", limit: 200 }).then((page) =>
       setSuppliers(page?.items || [])
     );
     setValues({

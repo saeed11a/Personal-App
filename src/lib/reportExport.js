@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 
 const cell = (value) => (value === undefined || value === null ? "" : String(value));
 
@@ -44,7 +44,7 @@ export function printReport({ title, subtitle, columns, rows }) {
 
 // Walks every page of a query - used only for exports.
 export async function fetchAll(entityName, query = {}, sort = "-created_date") {
-  const entity = base44.entities[entityName];
+  const entity = db[entityName];
   const rows = [];
   let cursor;
   for (let i = 0; i < 40; i += 1) {

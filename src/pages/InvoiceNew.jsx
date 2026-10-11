@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Field, FormError } from "@/components/FormDialog";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE } from "@/lib/recycle";
 import { articleStockMap } from "@/lib/analytics";
 import { createInvoice } from "@/functions/createInvoice";
@@ -34,8 +34,8 @@ export default function InvoiceNew() {
   useEffect(() => {
     (async () => {
       const [articlePage, customerPage, map] = await Promise.all([
-        base44.entities.Article.filter(ALIVE, { limit: 500 }),
-        base44.entities.Customer.filter(ALIVE, { sort: "name", limit: 200 }),
+        db.Article.filter(ALIVE, { limit: 500 }),
+        db.Customer.filter(ALIVE, { sort: "name", limit: 200 }),
         articleStockMap().catch(() => new Map()),
       ]);
       setCustomers(customerPage?.items || []);

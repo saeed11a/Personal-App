@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ReportShell from "@/components/reports/ReportShell";
 import StatusPill from "@/components/StatusPill";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE } from "@/lib/recycle";
 import { cashStats } from "@/lib/analytics";
 import { useSettings } from "@/lib/useSettings";
@@ -25,7 +25,7 @@ export default function RoznamchaReport() {
       if (to) query.entry_date.$lte = to;
     }
     Promise.all([
-      base44.entities.Roznamcha.filter(query, { sort: "-entry_date", limit: 250 }),
+      db.Roznamcha.filter(query, { sort: "-entry_date", limit: 250 }),
       cashStats({ from, to }).catch(() => null),
     ]).then(([page, totals]) => {
       if (!active) return;

@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
+import { hasActiveSession, signOut, updatePassword } from "@/lib/authApi";
+import { usesSupabaseAuth } from "@/lib/authMode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +17,26 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // On the Supabase flow the recovery link leaves a session in the browser and the
+  // form follows it; the ?token= in the URL belongs to the Base44 flow.
+  const [checking, setChecking] = useState(usesSupabaseAuth);
+  const [recoveryReady, setRecoveryReady] = useState(false);
+
+  useEffect(() => {
+    if (!usesSupabaseAuth) return undefined;
+    let active = true;
+    hasActiveSession()
+      .then((ok) => {
+        if (active) setRecoveryReady(ok);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setChecking(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +47,12 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
-      await base44.auth.resetPassword({ resetToken, newPassword });
+      if (usesSupabaseAuth) {
+        await updatePassword(newPassword);
+        await signOut();
+      } else {
+        await base44.auth.resetPassword({ resetToken, newPassword });
+      }
       window.location.href = "/login";
     } catch (err) {
       setError(err.message || "Failed to reset password");
@@ -34,7 +61,10 @@ export default function ResetPassword() {
     }
   };
 
-  if (!resetToken) {
+  // Waiting on the recovery session before judging the link.
+  if (checking) return null;
+
+  if (usesSupabaseAuth ? !recoveryReady : !resetToken) {
     return (
       <AuthLayout
         icon={AlertTriangle}

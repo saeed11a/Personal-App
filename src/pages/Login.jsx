@@ -1,7 +1,8 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Link, useNavigate } from "react-router-dom";
+import { signInWithPassword, signInWithProvider } from "@/lib/authApi";
+import { usesSupabaseAuth } from "@/lib/authMode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const returnTo = safeReturnTo();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,7 +26,13 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await base44.auth.loginViaEmailPassword(email, password);
+      await signInWithPassword(email, password);
+      // Supabase hands the session to the auth listener and the app carries on in
+      // place; the Base44 backend still needs the full reload it always had.
+      if (usesSupabaseAuth) {
+        navigate(returnTo, { replace: true });
+        return;
+      }
       window.location.href = returnTo;
     } catch (err) {
       console.error("Email login failed:", err);
@@ -41,7 +49,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await base44.auth.loginWithProvider("google", returnTo);
+      await signInWithProvider("google", returnTo);
     } catch (err) {
       console.error("Google login failed:", err);
       setError(

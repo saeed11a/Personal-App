@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { num } from "@/lib/format";
 
 const ALIVE = { is_deleted: { $ne: true } };
@@ -18,7 +18,7 @@ const counts = (rows) => rows.reduce((total, row) => total + num(row.count), 0);
 
 /** One aggregate gives the whole invoice picture: totals, outstanding and open orders. */
 export async function invoiceStats({ from, to } = {}) {
-  const result = await base44.entities.Invoice.aggregate({
+  const result = await db.Invoice.aggregate({
     query: withRange(ALIVE, from, to, "invoice_date"),
     groupBy: "status",
     sum: ["total", "received", "balance", "total_pairs"],
@@ -36,7 +36,7 @@ export async function invoiceStats({ from, to } = {}) {
 
 /** Sales per day (or week/month) for the dashboard charts. */
 export async function salesSeries({ from, to, unit = "day" } = {}) {
-  const result = await base44.entities.Invoice.aggregate({
+  const result = await db.Invoice.aggregate({
     query: withRange(ALIVE, from, to, "invoice_date"),
     dateBucket: { field: "invoice_date", unit },
     sum: ["total", "received"],
@@ -61,7 +61,7 @@ export function trendWithDeltas(series) {
 }
 
 export async function purchaseStats({ from, to } = {}) {
-  const result = await base44.entities.Purchase.aggregate({
+  const result = await db.Purchase.aggregate({
     query: withRange(ALIVE, from, to, "purchase_date"),
     groupBy: "category",
     sum: ["amount", "quantity", "total_pairs"],
@@ -71,7 +71,7 @@ export async function purchaseStats({ from, to } = {}) {
 }
 
 export async function paymentStats({ from, to } = {}) {
-  const result = await base44.entities.Payment.aggregate({
+  const result = await db.Payment.aggregate({
     query: withRange(ALIVE, from, to, "payment_date"),
     groupBy: "direction",
     sum: ["amount"],
@@ -81,12 +81,12 @@ export async function paymentStats({ from, to } = {}) {
 
 export async function cashStats({ from, to } = {}) {
   const [all, expenses] = await Promise.all([
-    base44.entities.Roznamcha.aggregate({
+    db.Roznamcha.aggregate({
       query: withRange(ALIVE, from, to, "entry_date"),
       groupBy: "direction",
       sum: ["amount"],
     }),
-    base44.entities.Roznamcha.aggregate({
+    db.Roznamcha.aggregate({
       query: { ...withRange(ALIVE, from, to, "entry_date"), source: "kharcha" },
       groupBy: "direction",
       sum: ["amount"],
@@ -106,7 +106,7 @@ export async function cashStats({ from, to } = {}) {
 }
 
 export async function rawStockByCategory() {
-  const result = await base44.entities.RawStock.aggregate({
+  const result = await db.RawStock.aggregate({
     query: ALIVE,
     groupBy: "category",
     sum: ["quantity", "total_pairs", "amount"],
@@ -117,14 +117,14 @@ export async function rawStockByCategory() {
 /** Live uppers position per article: added, consumed by production, available. */
 export async function articleStockMap({ from, to } = {}) {
   const [raw, production, ready, sold] = await Promise.all([
-    base44.entities.RawStock.aggregate({ query: { ...ALIVE, category: "uppers" }, groupBy: "article_code", sum: ["total_pairs", "quantity"] }),
-    base44.entities.ProductionEntry.aggregate({
+    db.RawStock.aggregate({ query: { ...ALIVE, category: "uppers" }, groupBy: "article_code", sum: ["total_pairs", "quantity"] }),
+    db.ProductionEntry.aggregate({
       query: withRange(ALIVE, from, to, "production_date"),
       groupBy: "article_code",
       sum: ["uppers_used_pairs", "output_pairs"],
     }),
-    base44.entities.ReadyShoe.aggregate({ query: ALIVE, groupBy: "article_code", sum: ["pairs", "cartons"] }),
-    base44.entities.InvoiceLine.aggregate({
+    db.ReadyShoe.aggregate({ query: ALIVE, groupBy: "article_code", sum: ["pairs", "cartons"] }),
+    db.InvoiceLine.aggregate({
       query: withRange(ALIVE, from, to, "invoice_date"),
       groupBy: "article_code",
       sum: ["pairs", "cartons", "line_total"],
@@ -172,8 +172,8 @@ export async function articleStockMap({ from, to } = {}) {
 /** Customer balances: opening + invoiced - received, straight from the ledger. */
 export async function customerBalanceMap() {
   const [invoices, payments] = await Promise.all([
-    base44.entities.Invoice.aggregate({ query: ALIVE, groupBy: "customer_name", sum: ["total", "received"] }),
-    base44.entities.Payment.aggregate({ query: { ...ALIVE, party_type: "customer" }, groupBy: "party_name", sum: ["amount"] }),
+    db.Invoice.aggregate({ query: ALIVE, groupBy: "customer_name", sum: ["total", "received"] }),
+    db.Payment.aggregate({ query: { ...ALIVE, party_type: "customer" }, groupBy: "party_name", sum: ["amount"] }),
   ]);
   const map = new Map();
   (invoices?.rows || []).forEach((row) => {
@@ -191,8 +191,8 @@ export async function customerBalanceMap() {
 
 export async function supplierBalanceMap() {
   const [purchases, payments] = await Promise.all([
-    base44.entities.Purchase.aggregate({ query: ALIVE, groupBy: "supplier_name", sum: ["amount"] }),
-    base44.entities.Payment.aggregate({ query: { ...ALIVE, party_type: "supplier" }, groupBy: "party_name", sum: ["amount"] }),
+    db.Purchase.aggregate({ query: ALIVE, groupBy: "supplier_name", sum: ["amount"] }),
+    db.Payment.aggregate({ query: { ...ALIVE, party_type: "supplier" }, groupBy: "party_name", sum: ["amount"] }),
   ]);
   const map = new Map();
   (purchases?.rows || []).forEach((row) => {
@@ -216,10 +216,12 @@ export async function partyLedger(type, party) {
 
   const [debitDocs, payments] = await Promise.all([
     isCustomer
-      ? base44.entities.Invoice.filter({ ...ALIVE, customer_name: name }, { sort: "invoice_date", limit: 200 })
+      ? db.Invoice.filter({ ...ALIVE, customer_name: name }, { sort: "invoice_date", limit: 200 })
           .then((page) => (page?.items || []).map((row) => ({
             id: row.id,
             date: row.invoice_date,
+            time: row.invoice_time || "",
+            at: row.created_date,
             label: `Invoice ${row.invoice_number || ""}`.trim(),
             detail: `${num(row.total_pairs)} prs`,
             pairs: num(row.total_pairs),
@@ -227,20 +229,24 @@ export async function partyLedger(type, party) {
             credit: 0,
             kind: "invoice",
           })))
-      : base44.entities.Purchase.filter({ ...ALIVE, supplier_name: name }, { sort: "purchase_date", limit: 200 })
+      : db.Purchase.filter({ ...ALIVE, supplier_name: name }, { sort: "purchase_date", limit: 200 })
           .then((page) => (page?.items || []).map((row) => ({
             id: row.id,
             date: row.purchase_date,
+            time: "",
+            at: row.created_date,
             label: row.item_name,
             detail: `${num(row.quantity)} ${row.unit || ""}`.trim(),
             debit: 0,
             credit: num(row.amount),
             kind: "purchase",
           }))),
-    base44.entities.Payment.filter({ ...ALIVE, party_name: name }, { sort: "payment_date", limit: 200 })
+    db.Payment.filter({ ...ALIVE, party_name: name }, { sort: "payment_date", limit: 200 })
       .then((page) => (page?.items || []).map((row) => ({
         id: row.id,
         date: row.payment_date,
+        time: "",
+        at: row.created_date,
         label: `${row.direction === "in" ? "Payment received" : "Payment made"} · ${row.method || ""}`.trim(),
         detail: row.reference || "",
         debit: isCustomer ? 0 : num(row.amount),

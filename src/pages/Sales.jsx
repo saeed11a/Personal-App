@@ -6,8 +6,7 @@ import DataTable from "@/components/DataTable";
 import InvoiceDetailDialog from "@/components/InvoiceDetailDialog";
 import ExportButtons from "@/components/ExportButtons";
 import DateRangeFilter from "@/components/DateRangeFilter";
-import StatusPill, { statusTone } from "@/components/StatusPill";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE } from "@/lib/recycle";
 import { invoiceStats } from "@/lib/analytics";
 import { useSettings } from "@/lib/useSettings";
@@ -32,7 +31,7 @@ export default function Sales() {
       if (to) query.invoice_date.$lte = to;
     }
     const [page, invoiceTotals] = await Promise.all([
-      base44.entities.InvoiceLine.filter(query, { sort: "-invoice_date", limit: 200 }),
+      db.InvoiceLine.filter(query, { sort: "-invoice_date", limit: 200 }),
       invoiceStats({ from, to }).catch(() => null),
     ]);
     setLines(page?.items || []);

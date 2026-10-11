@@ -4,7 +4,7 @@ import { ChevronRight, FlaskConical, Layers, Plus, Boxes } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import CategoryForm from "@/components/forms/CategoryForm";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE } from "@/lib/recycle";
 import { BUILTIN_CATEGORIES } from "@/lib/rawCategories";
 import { rawStockByCategory } from "@/lib/analytics";
@@ -21,7 +21,7 @@ export default function RawStock() {
   const load = async () => {
     setLoading(true);
     const [categories, stats] = await Promise.all([
-      base44.entities.RawCategory.filter(ALIVE, { sort: "sort_order", limit: 100 }),
+      db.RawCategory.filter(ALIVE, { sort: "sort_order", limit: 100 }),
       rawStockByCategory().catch(() => []),
     ]);
     setCustom(categories?.items || []);

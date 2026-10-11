@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ReportShell from "@/components/reports/ReportShell";
 import StatusPill from "@/components/StatusPill";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE } from "@/lib/recycle";
 import { paymentStats } from "@/lib/analytics";
 import { useSettings } from "@/lib/useSettings";
@@ -25,7 +25,7 @@ export default function PaymentReport() {
       if (to) query.payment_date.$lte = to;
     }
     Promise.all([
-      base44.entities.Payment.filter(query, { sort: "-payment_date", limit: 200 }),
+      db.Payment.filter(query, { sort: "-payment_date", limit: 200 }),
       paymentStats({ from, to }).catch(() => []),
     ]).then(([page, totals]) => {
       if (!active) return;

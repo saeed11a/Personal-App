@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ReportShell from "@/components/reports/ReportShell";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE } from "@/lib/recycle";
 import { useSettings } from "@/lib/useSettings";
 import { money, shortDate } from "@/lib/format";
@@ -21,7 +21,7 @@ export default function KharchaReport() {
       if (from) query.entry_date.$gte = from;
       if (to) query.entry_date.$lte = to;
     }
-    base44.entities.Roznamcha.filter(query, { sort: "-entry_date", limit: 250 }).then((page) => {
+    db.Roznamcha.filter(query, { sort: "-entry_date", limit: 250 }).then((page) => {
       if (!active) return;
       setRows(page?.items || []);
       setLoading(false);

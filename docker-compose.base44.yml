@@ -1,52 +1,71 @@
-# Base44 sandbox/dev compose for this repository.
+# Base44 sandbox runbook for HIKER+ Shoes Factory ERP.
 #
-# This repo is a Base44 app: a Vite + React single-page frontend that talks to a
-# Base44-hosted backend (entities, functions, auth) through @base44/sdk. There is
-# no local server process in the repo.
+# Runs the Vite dev server straight from the cloned source (bind mount + startup
+# install) so every edit shows up live in the preview on host port 3000.
 #
-# Why `npm run dev` (frontend) and not the repo's documented `base44 dev`:
-# `base44 dev` runs a local Deno backend and needs `base44 login` + `base44 link`
-# plus a published app, which cannot be provisioned non-interactively in this
-# sandbox. Instead the Vite dev server runs from the bind-mounted source (live
-# reload) with the SDK pointed at the app's hosted Base44 backend through
-# VITE_BASE44_APP_ID / VITE_BASE44_APP_BASE_URL.
+# The app is a Base44 frontend: its data/auth backend is a hosted service, so no
+# local database service is declared here. Supabase (the target backend) is a
+# managed service reached over the network, not a compose service.
 #
-# Run: docker compose -f docker-compose.base44.yml up -d --build
+# `docker compose -f docker-compose.base44.yml up -d --build`
 services:
   web:
-    image: node:22
+    # Plain runtime image, never a prebuilt app image: the repo is bind-mounted
+    # and the dev server runs from source so edits are live.
+    image: node:22-bookworm
     working_dir: /app
+    restart: on-failure
+    volumes:
+      - .:/app
+      # Dependencies live in a volume (not the bind mount) and are (re)installed
+      # from the mounted manifests on every start, honouring the committed
+      # package-lock.json.
+      - web_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      # Vite >= 6.1 appends this value to `server.allowedHosts`, which is what
+      # lets the preview proxy host (<port>-<sandbox id>.e2b.app) reach the dev
+      # server. Passed through bare so the platform-provided value is used.
+      - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
+      - BASE44_PREVIEW_MODE
+    env_file:
+      # Public, non-secret defaults first; platform-managed secrets second, so a
+      # value configured in the dashboard always wins over the default.
+      - ./.env.base44-defaults
+      - /run/base44/app.env
     command:
       - sh
       - -ec
-      - |
-        npm install --no-audit --no-fund
-        exec npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
-    ports:
-      - "3000:5173"
-    volumes:
-      - .:/app
-      - web_node_modules:/app/node_modules
-    environment:
-      # Platform-provided sandbox flag; passed through so app config can gate
-      # sandbox-only overrides on BASE44_PREVIEW_MODE === "1".
-      - BASE44_PREVIEW_MODE
-      # Let Vite accept the preview proxy's external hostname.
-      - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
-    env_file:
-      # Base44-managed secrets (VITE_BASE44_APP_ID, VITE_BASE44_APP_BASE_URL).
-      # Last entry so the user's dashboard values always win.
-      - /run/base44/app.env
-    restart: on-failure
+      - npm install --no-audit --no-fund && exec npx vite --host 0.0.0.0 --port 3000 --strictPort
+    # Probes real app responsiveness (index.html served by Vite), with a long
+    # grace period for the first dependency install.
     healthcheck:
       test:
-        - CMD-SHELL
-        - >-
-          node -e "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-      interval: 10s
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
       timeout: 5s
       retries: 5
       start_period: 180s
+
+  # One-shot database tool for the Supabase project. Not started by `up`
+  # (profile "tools"); invoke it explicitly, e.g.
+  #   docker compose -f docker-compose.base44.yml run --rm dbadmin \
+  #     sh -c 'psql "$SUPABASE_DB_URL" -f /sql/migrations/0001_core_schema.sql'
+  # Compose parses the managed secrets file (which quotes values containing special
+  # characters) correctly, so the connection string arrives intact here.
+  dbadmin:
+    image: postgres:16
+    profiles: ["tools"]
+    working_dir: /sql
+    volumes:
+      - ./supabase:/sql:ro
+    env_file:
+      - ./.env.base44-defaults
+      - /run/base44/app.env
 
 volumes:
   web_node_modules:

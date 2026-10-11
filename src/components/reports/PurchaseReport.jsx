@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ReportShell from "@/components/reports/ReportShell";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE } from "@/lib/recycle";
 import { purchaseStats } from "@/lib/analytics";
 import { useSettings } from "@/lib/useSettings";
@@ -24,7 +24,7 @@ export default function PurchaseReport() {
       if (to) query.purchase_date.$lte = to;
     }
     Promise.all([
-      base44.entities.Purchase.filter(query, { sort: "-purchase_date", limit: 200 }),
+      db.Purchase.filter(query, { sort: "-purchase_date", limit: 200 }),
       purchaseStats({ from, to }).catch(() => null),
     ]).then(([page, totals]) => {
       if (!active) return;

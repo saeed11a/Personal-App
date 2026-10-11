@@ -1,13 +1,38 @@
-import React from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import KpiCard from "@/components/KpiCard";
 import DataTable from "@/components/DataTable";
-import ExportButtons from "@/components/ExportButtons";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import { useSettings } from "@/lib/useSettings";
 
-// Shared shell for every report: totals, date filter, export and the table itself.
+// The report that is on screen hands its rows and columns up to the Reports page, so
+// the Excel / CSV and PDF / Print buttons sit beside the page title — the same place
+// every other module keeps them — instead of inside the open tab. A shell rendered
+// without that provider simply publishes nothing.
+export const ReportExportContext = createContext(null);
+
+// Shared shell for every report: totals, date filter, export payload and the table.
 export default function ReportShell({ title, description, filename, columns, rows, loading, totals = [], range, children }) {
   const { settings } = useSettings();
+  const publish = useContext(ReportExportContext);
+
+  useEffect(() => {
+    if (!publish) return undefined;
+    publish({
+      filename,
+      title,
+      subtitle: settings.company_name,
+      columns: columns.map((column) => ({
+        label: column.label,
+        key: column.key,
+        value: (row) => (typeof column.render === "function" ? column.render(row) : row[column.key]),
+      })),
+      rows,
+    });
+    return () => publish(null);
+    // `columns` is rebuilt on every report render; the payload only has to change when
+    // the report or its rows do.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publish, filename, title, settings.company_name, rows]);
 
   return (
     <section className="space-y-4">
@@ -16,17 +41,6 @@ export default function ReportShell({ title, description, filename, columns, row
           <h2 className="font-heading text-lg font-bold tracking-tight">{title}</h2>
           <p className="max-w-2xl text-sm text-muted-foreground">{description}</p>
         </div>
-        <ExportButtons
-          filename={filename}
-          title={title}
-          subtitle={settings.company_name}
-          columns={columns.map((column) => ({
-            label: column.label,
-            key: column.key,
-            value: (row) => (typeof column.render === "function" ? column.render(row) : row[column.key]),
-          }))}
-          rows={rows}
-        />
       </div>
 
       {!!totals.length && (

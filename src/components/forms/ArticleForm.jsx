@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,8 +67,8 @@ export default function ArticleForm({ open, onOpenChange, initial, onSaved }) {
         status: values.status,
         is_deleted: false,
       };
-      if (initial?.id) await base44.entities.Article.update(initial.id, payload);
-      else await base44.entities.Article.create(payload);
+      if (initial?.id) await db.Article.update(initial.id, payload);
+      else await db.Article.create(payload);
       onSaved?.();
       onOpenChange(false);
     } catch (err) {

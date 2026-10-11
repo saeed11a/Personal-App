@@ -6,9 +6,13 @@ on:
     branches:
       - main
       - App-exe
+      # Development branches: builds run here, "main" stays untouched.
+      - scratch-supabase-apk-exe
+      - personal-oct-11
     paths:
       - "src/**"
       - "public/**"
+      - "resources/**"
       - "package.json"
       - "package-lock.json"
       - "vite.config.js"
@@ -37,13 +41,19 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: "4. Verify Base44 Variables"
+      - name: "4. Verify Environment Variables"
         env:
           VITE_BASE44_APP_ID: ${{ vars.VITE_BASE44_APP_ID }}
           VITE_BASE44_APP_BASE_URL: ${{ vars.VITE_BASE44_APP_BASE_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           test -n "$VITE_BASE44_APP_ID" || (echo "Missing VITE_BASE44_APP_ID" && exit 1)
           test -n "$VITE_BASE44_APP_BASE_URL" || (echo "Missing VITE_BASE44_APP_BASE_URL" && exit 1)
+          # Supabase is introduced module by module, so these warn until the
+          # migration is complete instead of failing the build today.
+          test -n "$VITE_SUPABASE_URL" || echo "::warning::VITE_SUPABASE_URL repository variable is not set"
+          test -n "$VITE_SUPABASE_PUBLISHABLE_KEY" || echo "::warning::VITE_SUPABASE_PUBLISHABLE_KEY repository variable is not set"
 
       - name: "5. Install Dependencies"
         run: npm install
@@ -56,6 +66,8 @@ jobs:
         env:
           VITE_BASE44_APP_ID: ${{ vars.VITE_BASE44_APP_ID }}
           VITE_BASE44_APP_BASE_URL: ${{ vars.VITE_BASE44_APP_BASE_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
       - name: "8. Verify Capacitor Configuration"
         run: |
@@ -64,16 +76,26 @@ jobs:
       - name: "9. Add Android Platform"
         run: npx cap add android
 
-      - name: "10. Sync Android Files"
+      - name: "10. Generate App Icon"
+        # Launcher icon + splash come from the HIKER+ mark in resources/ (see
+        # resources/README.md). --assetPath is explicit so the folder cannot be
+        # guessed wrong, and the icon background matches the mark's own off-white.
+        run: |
+          npm install --no-save @capacitor/assets
+          npx @capacitor/assets generate --android --assetPath resources \
+            --iconBackgroundColor '#F4F4F4' --iconBackgroundColorDark '#F4F4F4' \
+            --splashBackgroundColor '#F4F4F4' --splashBackgroundColorDark '#16191f'
+
+      - name: "11. Sync Android Files"
         run: npx cap sync android
 
-      - name: "11. Build Android APK"
+      - name: "12. Build Android APK"
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: "12. Upload APK"
+      - name: "13. Upload APK"
         uses: actions/upload-artifact@v4
         with:
           name: HIKER-Factory-ERP-Android-APK

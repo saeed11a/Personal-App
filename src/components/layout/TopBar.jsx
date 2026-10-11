@@ -1,55 +1,37 @@
-import React, { useEffect, useState } from "react";
-import { LogOut, Menu, ShieldCheck } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import React from "react";
+import { Link } from "react-router-dom";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
+import LiveClock from "@/components/layout/LiveClock";
+import ConnectionStatus from "@/components/layout/ConnectionStatus";
+import ProfileMenu from "@/components/layout/ProfileMenu";
 
+// Top bar: the HIKER+ mark, the live factory clock, the backend connection
+// indicator, the theme switch and the account menu. Everything that acts on the
+// signed-in account lives behind ProfileMenu. All of it is screen-only chrome
+// (`no-print`), and it never scrolls away.
 export default function TopBar({ onOpenNav }) {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    base44.auth
-      .me()
-      .then(setUser)
-      .catch(() => setUser(null));
-  }, []);
-
-  const handleLogout = async () => {
-    await base44.auth.logout();
-    window.location.href = "/login";
-  };
-
   return (
-    <header className="no-print sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur-md sm:px-6 lg:px-10">
+    <header className="no-print sticky top-0 z-30 flex h-16 items-center gap-1.5 border-b border-border bg-background/85 px-3 backdrop-blur-md sm:gap-3 sm:px-6 lg:px-10">
       <Button variant="ghost" size="icon" onClick={onOpenNav} aria-label="Open navigation" className="lg:hidden">
         <Menu className="h-5 w-5" />
       </Button>
-      <p className="flex-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        Manufacturing Control
-      </p>
-      <ThemeToggle />
-      <div className="flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-2 pr-1">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">
-          {(user?.full_name || user?.email || "H").charAt(0).toUpperCase()}
+
+      <Link to="/" className="flex shrink-0 items-center gap-2" aria-label="HIKER+ home">
+        {/* The mark is shown from `sm` up; on the narrowest phones the wordmark,
+            the clock, the status dot and the account menu need the width more. */}
+        <img src="/hiker-logo.png" alt="" className="hidden h-8 w-8 shrink-0 rounded-lg object-contain sm:block" />
+        <span className="font-heading text-base font-extrabold tracking-tight sm:text-lg">
+          HIKER<span className="text-brand">+</span>
         </span>
-        <span className="hidden leading-tight sm:block">
-          <span className="block max-w-[140px] truncate text-xs font-semibold">
-            {user?.full_name || "Factory User"}
-          </span>
-          <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-            <ShieldCheck className="h-3 w-3" />
-            {user?.role || "user"}
-          </span>
-        </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleLogout}
-          aria-label="Log out"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
+      </Link>
+
+      <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-3">
+        <LiveClock />
+        <ConnectionStatus />
+        <ThemeToggle />
+        <ProfileMenu />
       </div>
     </header>
   );
