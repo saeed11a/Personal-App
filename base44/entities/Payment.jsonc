@@ -1,0 +1,62 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "party_type": {
+      "type": "string",
+      "enum": [
+        "customer",
+        "supplier"
+      ]
+    },
+    "party_id": {
+      "type": "string"
+    },
+    "party_name": {
+      "type": "string"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "in",
+        "out"
+      ],
+      "description": "in = received from customer, out = paid to supplier"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "payment_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "Cash",
+        "Bank",
+        "Cheque",
+        "Online"
+      ],
+      "default": "Cash"
+    },
+    "reference": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "party_name",
+    "amount"
+  ]
+}

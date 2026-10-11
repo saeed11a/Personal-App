@@ -1,0 +1,103 @@
+{
+  "name": "Article",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Article number (auto-created from Uppers stock)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Article name"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Men",
+        "Women",
+        "Kids",
+        "Unisex",
+        "Sports",
+        "Formal",
+        "Casual"
+      ],
+      "default": "Unisex"
+    },
+    "sizes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "colors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "upper_type": {
+      "type": "string"
+    },
+    "sole_type": {
+      "type": "string"
+    },
+    "unit_cost": {
+      "type": "number"
+    },
+    "selling_price": {
+      "type": "number",
+      "description": "Default price per pair"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "code",
+    "name"
+  ],
+  "rls": {
+    "create": null,
+    "read": null,
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

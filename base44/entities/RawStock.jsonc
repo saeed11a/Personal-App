@@ -1,0 +1,73 @@
+{
+  "name": "RawStock",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "description": "uppers, chemicals or a custom category slug"
+    },
+    "item_name": {
+      "type": "string"
+    },
+    "article_code": {
+      "type": "string",
+      "description": "Article number this material belongs to (Uppers)"
+    },
+    "article_id": {
+      "type": "string"
+    },
+    "pack_type": {
+      "type": "string",
+      "description": "e.g. 100-pair bag, 150-pair bag"
+    },
+    "pairs_per_pack": {
+      "type": "number",
+      "description": "Pairs contained in one pack"
+    },
+    "quantity": {
+      "type": "number",
+      "default": 0,
+      "description": "Quantity in bags / drums / kg / pieces"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "total_pairs": {
+      "type": "number",
+      "description": "quantity x pairs per pack"
+    },
+    "price": {
+      "type": "number",
+      "description": "Price per unit"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "supplier_name": {
+      "type": "string"
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "custom_json": {
+      "type": "string",
+      "description": "Custom category field values stored as JSON"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "category",
+    "item_name"
+  ]
+}

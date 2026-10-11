@@ -1,0 +1,60 @@
+{
+  "name": "ReadyShoe",
+  "type": "object",
+  "properties": {
+    "article_id": {
+      "type": "string"
+    },
+    "article_code": {
+      "type": "string"
+    },
+    "article_name": {
+      "type": "string"
+    },
+    "batch_label": {
+      "type": "string"
+    },
+    "carton_type": {
+      "type": "string",
+      "description": "e.g. 24-pair carton"
+    },
+    "pairs_per_carton": {
+      "type": "number"
+    },
+    "cartons": {
+      "type": "number",
+      "default": 0
+    },
+    "pairs": {
+      "type": "number",
+      "description": "cartons x pairs per carton"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "production"
+      ],
+      "default": "manual"
+    },
+    "entry_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "article_code",
+    "pairs"
+  ]
+}

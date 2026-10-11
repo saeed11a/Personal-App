@@ -1,0 +1,62 @@
+{
+  "name": "Purchase",
+  "type": "object",
+  "properties": {
+    "supplier_id": {
+      "type": "string"
+    },
+    "supplier_name": {
+      "type": "string"
+    },
+    "item_name": {
+      "type": "string"
+    },
+    "article_code": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "description": "uppers, chemicals or a custom category slug"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "pack_type": {
+      "type": "string"
+    },
+    "pairs_per_pack": {
+      "type": "number"
+    },
+    "quantity": {
+      "type": "number"
+    },
+    "total_pairs": {
+      "type": "number"
+    },
+    "unit_price": {
+      "type": "number"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "item_name",
+    "amount"
+  ]
+}

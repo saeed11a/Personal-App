@@ -1,0 +1,52 @@
+# Base44 sandbox/dev compose for this repository.
+#
+# This repo is a Base44 app: a Vite + React single-page frontend that talks to a
+# Base44-hosted backend (entities, functions, auth) through @base44/sdk. There is
+# no local server process in the repo.
+#
+# Why `npm run dev` (frontend) and not the repo's documented `base44 dev`:
+# `base44 dev` runs a local Deno backend and needs `base44 login` + `base44 link`
+# plus a published app, which cannot be provisioned non-interactively in this
+# sandbox. Instead the Vite dev server runs from the bind-mounted source (live
+# reload) with the SDK pointed at the app's hosted Base44 backend through
+# VITE_BASE44_APP_ID / VITE_BASE44_APP_BASE_URL.
+#
+# Run: docker compose -f docker-compose.base44.yml up -d --build
+services:
+  web:
+    image: node:22
+    working_dir: /app
+    command:
+      - sh
+      - -ec
+      - |
+        npm install --no-audit --no-fund
+        exec npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
+    ports:
+      - "3000:5173"
+    volumes:
+      - .:/app
+      - web_node_modules:/app/node_modules
+    environment:
+      # Platform-provided sandbox flag; passed through so app config can gate
+      # sandbox-only overrides on BASE44_PREVIEW_MODE === "1".
+      - BASE44_PREVIEW_MODE
+      # Let Vite accept the preview proxy's external hostname.
+      - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
+    env_file:
+      # Base44-managed secrets (VITE_BASE44_APP_ID, VITE_BASE44_APP_BASE_URL).
+      # Last entry so the user's dashboard values always win.
+      - /run/base44/app.env
+    restart: on-failure
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+
+volumes:
+  web_node_modules:

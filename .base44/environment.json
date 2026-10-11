@@ -1,0 +1,17 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "VITE_BASE44_APP_ID",
+      "description": "Base44 app id of the hosted backend this frontend talks to. Find it in the Base44 editor URL: app.base44.com/apps/<app-id>/editor. Without it every /api call 404s and the app can only render the login screen.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "VITE_BASE44_APP_BASE_URL",
+      "description": "Base URL of your published Base44 app (frontend + /api backend share this origin), e.g. https://<app-id>.base44.app, with no trailing slash. Vite proxies /api to it. Without it the app logs '[base44] No Base44 backend configured' and no data loads.",
+      "requiredAtBoot": false
+    }
+  ]
+}

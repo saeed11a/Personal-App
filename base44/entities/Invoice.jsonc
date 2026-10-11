@@ -1,0 +1,85 @@
+{
+  "name": "Invoice",
+  "type": "object",
+  "properties": {
+    "invoice_number": {
+      "type": "string"
+    },
+    "customer_id": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "customer_phone": {
+      "type": "string"
+    },
+    "customer_address": {
+      "type": "string"
+    },
+    "invoice_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "invoice_time": {
+      "type": "string"
+    },
+    "total_cartons": {
+      "type": "number"
+    },
+    "total_pairs": {
+      "type": "number"
+    },
+    "subtotal": {
+      "type": "number"
+    },
+    "discount": {
+      "type": "number",
+      "default": 0
+    },
+    "total": {
+      "type": "number"
+    },
+    "received": {
+      "type": "number",
+      "default": 0
+    },
+    "balance": {
+      "type": "number"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "Cash",
+        "Bank",
+        "Cheque",
+        "Online"
+      ],
+      "default": "Cash"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "partial",
+        "paid"
+      ],
+      "default": "unpaid"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "customer_name",
+    "total"
+  ]
+}
