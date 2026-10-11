@@ -18,18 +18,6 @@ on:
       - "electron/**"
       - "electron-builder.yml"
       - ".github/workflows/windows-exe.yml"
-  # Also build on pull requests, so a change is verified before it reaches main.
-  # Same path filter: a PR that touches none of these files is skipped.
-  pull_request:
-    paths:
-      - "src/**"
-      - "public/**"
-      - "package.json"
-      - "package-lock.json"
-      - "vite.config.js"
-      - "electron/**"
-      - "electron-builder.yml"
-      - ".github/workflows/windows-exe.yml"
 
 permissions:
   contents: read
