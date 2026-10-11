@@ -1,0 +1,82 @@
+name: Build HIKER Factory ERP Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - App-exe
+    paths:
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - "capacitor.config.json"
+      - ".github/workflows/android-apk.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "1. Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "2. Set Up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: "3. Set Up Java"
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: "4. Verify Base44 Variables"
+        env:
+          VITE_BASE44_APP_ID: ${{ vars.VITE_BASE44_APP_ID }}
+          VITE_BASE44_APP_BASE_URL: ${{ vars.VITE_BASE44_APP_BASE_URL }}
+        run: |
+          test -n "$VITE_BASE44_APP_ID" || (echo "Missing VITE_BASE44_APP_ID" && exit 1)
+          test -n "$VITE_BASE44_APP_BASE_URL" || (echo "Missing VITE_BASE44_APP_BASE_URL" && exit 1)
+
+      - name: "5. Install Dependencies"
+        run: npm install
+
+      - name: "6. Install Capacitor"
+        run: npm install --no-save @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+
+      - name: "7. Build HIKER ERP"
+        run: npm run build -- --base=./
+        env:
+          VITE_BASE44_APP_ID: ${{ vars.VITE_BASE44_APP_ID }}
+          VITE_BASE44_APP_BASE_URL: ${{ vars.VITE_BASE44_APP_BASE_URL }}
+
+      - name: "8. Verify Capacitor Configuration"
+        run: |
+          test -f capacitor.config.json || (echo "capacitor.config.json is missing" && exit 1)
+
+      - name: "9. Add Android Platform"
+        run: npx cap add android
+
+      - name: "10. Sync Android Files"
+        run: npx cap sync android
+
+      - name: "11. Build Android APK"
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: "12. Upload APK"
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIKER-Factory-ERP-Android-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14

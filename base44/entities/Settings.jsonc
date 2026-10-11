@@ -1,0 +1,55 @@
+{
+  "name": "Settings",
+  "type": "object",
+  "properties": {
+    "company_name": {
+      "type": "string",
+      "default": "HIKER Shoes Factory"
+    },
+    "tagline": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string",
+      "default": "PKR"
+    },
+    "currency_symbol": {
+      "type": "string",
+      "default": "Rs"
+    },
+    "address": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "invoice_prefix": {
+      "type": "string",
+      "default": "INV"
+    },
+    "low_stock_threshold": {
+      "type": "number",
+      "default": 50,
+      "description": "Alert when pairs in stock fall to this level"
+    },
+    "default_pairs_per_bag": {
+      "type": "number",
+      "default": 100
+    },
+    "default_pairs_per_carton": {
+      "type": "number",
+      "default": 24
+    },
+    "opening_cash": {
+      "type": "number",
+      "default": 0
+    },
+    "footer_note": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

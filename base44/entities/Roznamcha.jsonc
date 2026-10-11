@@ -1,0 +1,75 @@
+{
+  "name": "Roznamcha",
+  "type": "object",
+  "properties": {
+    "entry_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "in",
+        "out"
+      ]
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "customer_receipt",
+        "supplier_payment",
+        "kharcha",
+        "other_income",
+        "opening"
+      ]
+    },
+    "party_type": {
+      "type": "string",
+      "enum": [
+        "customer",
+        "supplier"
+      ]
+    },
+    "party_id": {
+      "type": "string"
+    },
+    "party_name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "description": "Expense category for kharcha entries"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "Cash",
+        "Bank",
+        "Cheque",
+        "Online"
+      ],
+      "default": "Cash"
+    },
+    "reference": {
+      "type": "string"
+    },
+    "is_deleted": {
+      "type": "boolean",
+      "default": false
+    },
+    "deleted_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "direction",
+    "amount"
+  ]
+}

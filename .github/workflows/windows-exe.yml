@@ -1,0 +1,71 @@
+name: Build HIKER Factory ERP Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - App-exe
+    paths:
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - "electron/**"
+      - "electron-builder.yml"
+      - ".github/workflows/windows-exe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: "1. Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "2. Set Up Node.js"
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: "3. Verify Base44 Variables"
+        shell: pwsh
+        env:
+          VITE_BASE44_APP_ID: ${{ vars.VITE_BASE44_APP_ID }}
+          VITE_BASE44_APP_BASE_URL: ${{ vars.VITE_BASE44_APP_BASE_URL }}
+        run: |
+          if (-not $env:VITE_BASE44_APP_ID) { throw "Missing VITE_BASE44_APP_ID" }
+          if (-not $env:VITE_BASE44_APP_BASE_URL) { throw "Missing VITE_BASE44_APP_BASE_URL" }
+
+      - name: "4. Install Dependencies"
+        run: npm install
+
+      - name: "5. Install Electron Packaging Tools"
+        run: npm install --no-save electron@35.1.5 electron-builder@26.0.12
+
+      - name: "6. Build HIKER ERP"
+        run: npm run build -- --base=./
+        env:
+          VITE_BASE44_APP_ID: ${{ vars.VITE_BASE44_APP_ID }}
+          VITE_BASE44_APP_BASE_URL: ${{ vars.VITE_BASE44_APP_BASE_URL }}
+
+      - name: "7. Verify Electron Configuration"
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "electron-builder.yml")) { throw "Missing electron-builder.yml" }
+          if (-not (Test-Path "electron")) { throw "Missing electron folder" }
+
+      - name: "8. Build Windows Installer"
+        run: npx electron-builder --config electron-builder.yml --win nsis --x64 --publish never
+
+      - name: "9. Upload Windows Installer"
+        uses: actions/upload-artifact@v4
+        with:
+          name: HIKER-Factory-ERP-Windows-EXE
+          path: release/*.exe
+          if-no-files-found: error
+          retention-days: 14
