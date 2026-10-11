@@ -4,11 +4,12 @@ import PageHeader from "@/components/PageHeader";
 import KpiCard from "@/components/KpiCard";
 import PartyGrid from "@/components/PartyGrid";
 import PartyLedger from "@/components/PartyLedger";
+import PartyDetailDialog from "@/components/PartyDetailDialog";
 import DeleteDialog from "@/components/DeleteDialog";
 import { Button } from "@/components/ui/button";
 import CustomerForm from "@/components/forms/CustomerForm";
 import PaymentForm from "@/components/forms/PaymentForm";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE, softDelete } from "@/lib/recycle";
 import { customerBalanceMap } from "@/lib/analytics";
 import { useSettings } from "@/lib/useSettings";
@@ -21,6 +22,7 @@ export default function Customers() {
   const [customers, setCustomers] = useState([]);
   const [balances, setBalances] = useState(new Map());
   const [selected, setSelected] = useState(null);
+  const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -32,7 +34,7 @@ export default function Customers() {
   const load = async () => {
     setLoading(true);
     const [page, map] = await Promise.all([
-      base44.entities.Customer.filter(ALIVE, { sort: "name", limit: 200 }),
+      db.Customer.filter(ALIVE, { sort: "name", limit: 200 }),
       customerBalanceMap().catch(() => new Map()),
     ]);
     setCustomers(page?.items || []);
@@ -97,6 +99,7 @@ export default function Customers() {
             balances={balances}
             selectedId={selected?.id}
             onSelect={setSelected}
+            onOpen={setDetail}
             emptyLabel="No customers yet"
           />
         )}
@@ -130,6 +133,19 @@ export default function Customers() {
           }}
         />
       </div>
+
+      <PartyDetailDialog
+        open={!!detail}
+        onOpenChange={(open) => !open && setDetail(null)}
+        type="customer"
+        party={detail}
+        balance={detail ? balanceOf(detail) : undefined}
+        refreshKey={refreshKey}
+        onRecordPayment={(party) => {
+          setPaymentParty(party);
+          setPaymentOpen(true);
+        }}
+      />
 
       <CustomerForm open={formOpen} onOpenChange={setFormOpen} initial={editing} onSaved={load} />
       <PaymentForm

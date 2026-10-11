@@ -6,6 +6,9 @@ on:
     branches:
       - main
       - App-exe
+      # Development branches: builds run here, "main" stays untouched.
+      - scratch-supabase-apk-exe
+      - personal-oct-11
     paths:
       - "src/**"
       - "public/**"
@@ -32,14 +35,20 @@ jobs:
         with:
           node-version: 22
 
-      - name: "3. Verify Base44 Variables"
+      - name: "3. Verify Environment Variables"
         shell: pwsh
         env:
           VITE_BASE44_APP_ID: ${{ vars.VITE_BASE44_APP_ID }}
           VITE_BASE44_APP_BASE_URL: ${{ vars.VITE_BASE44_APP_BASE_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           if (-not $env:VITE_BASE44_APP_ID) { throw "Missing VITE_BASE44_APP_ID" }
           if (-not $env:VITE_BASE44_APP_BASE_URL) { throw "Missing VITE_BASE44_APP_BASE_URL" }
+          # Supabase is introduced module by module, so these warn until the
+          # migration is complete instead of failing the build today.
+          if (-not $env:VITE_SUPABASE_URL) { Write-Host "::warning::VITE_SUPABASE_URL repository variable is not set" }
+          if (-not $env:VITE_SUPABASE_PUBLISHABLE_KEY) { Write-Host "::warning::VITE_SUPABASE_PUBLISHABLE_KEY repository variable is not set" }
 
       - name: "4. Install Dependencies"
         run: npm install
@@ -52,6 +61,8 @@ jobs:
         env:
           VITE_BASE44_APP_ID: ${{ vars.VITE_BASE44_APP_ID }}
           VITE_BASE44_APP_BASE_URL: ${{ vars.VITE_BASE44_APP_BASE_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
       - name: "7. Verify Electron Configuration"
         shell: pwsh

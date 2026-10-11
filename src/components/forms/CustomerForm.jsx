@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,8 +31,8 @@ export default function CustomerForm({ open, onOpenChange, initial, onSaved }) {
     setError("");
     try {
       const payload = { ...values, opening_balance: Number(values.opening_balance) || 0, is_deleted: false };
-      if (initial?.id) await base44.entities.Customer.update(initial.id, payload);
-      else await base44.entities.Customer.create(payload);
+      if (initial?.id) await db.Customer.update(initial.id, payload);
+      else await db.Customer.create(payload);
       onSaved?.();
       onOpenChange(false);
     } catch (err) {

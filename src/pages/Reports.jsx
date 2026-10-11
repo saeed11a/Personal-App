@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { BarChart3 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
+import ExportButtons from "@/components/ExportButtons";
+import { ReportExportContext } from "@/components/reports/ReportShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StockReport from "@/components/reports/StockReport";
 import PurchaseReport from "@/components/reports/PurchaseReport";
@@ -19,30 +21,37 @@ const TABS = [
 ];
 
 export default function Reports() {
+  // The tab on screen publishes its rows and columns here, so the export buttons live
+  // in the page header with the title, above the tabs, like every other module.
+  const [exportPayload, setExportPayload] = useState(null);
+
   return (
     <div>
       <PageHeader
         eyebrow="Reporting"
         title="Reports"
         description="Module-wise reporting with date filters, live totals and Excel / PDF export."
+        actions={exportPayload ? <ExportButtons {...exportPayload} /> : undefined}
       />
 
-      <Tabs defaultValue="stock" className="space-y-6">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/60 p-1">
-          {TABS.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
-              <BarChart3 className="h-3.5 w-3.5" />
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <ReportExportContext.Provider value={setExportPayload}>
+        <Tabs defaultValue="stock" className="space-y-6">
+          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1 bg-muted/60 p-1">
+            {TABS.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
+                <BarChart3 className="h-3.5 w-3.5" />
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        {TABS.map((tab) => (
-          <TabsContent key={tab.value} value={tab.value} className="mt-0">
-            <tab.component />
-          </TabsContent>
-        ))}
-      </Tabs>
+          {TABS.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value} className="mt-0">
+              <tab.component />
+            </TabsContent>
+          ))}
+        </Tabs>
+      </ReportExportContext.Provider>
     </div>
   );
 }

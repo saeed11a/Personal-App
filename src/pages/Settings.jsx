@@ -9,10 +9,18 @@ import { Field, FormError } from "@/components/FormDialog";
 import { useSettings } from "@/lib/useSettings";
 import { CURRENCY_SYMBOLS } from "@/lib/format";
 import { useToast } from "@/components/ui/use-toast";
+import StaffPermissions from "@/components/staff/StaffPermissions";
+import ManualCategories from "@/components/settings/ManualCategories";
+import { useAuth } from "@/lib/AuthContext";
+import { usesSupabaseAuth } from "@/lib/authMode";
 
 export default function Settings() {
   const { settings, save, loading } = useSettings();
   const { toast } = useToast();
+  const { user } = useAuth();
+  // Manual categories live in Supabase only; the Base44 builds hide them rather
+  // than calling a backend they do not have.
+  const showAdminTools = user?.role === "admin" && usesSupabaseAuth;
   const [values, setValues] = useState(settings);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -42,6 +50,10 @@ export default function Settings() {
         default_pairs_per_carton: Number(values.default_pairs_per_carton) || 0,
         opening_cash: Number(values.opening_cash) || 0,
         footer_note: values.footer_note,
+        bank_account_no: values.bank_account_no,
+        bank_account_name: values.bank_account_name,
+        bank_branch: values.bank_branch,
+        terms: values.terms,
       });
       toast({ title: "Settings saved", description: "New defaults apply across every module." });
     } catch (err) {
@@ -94,6 +106,27 @@ export default function Settings() {
               <Textarea value={values.footer_note || ""} onChange={set("footer_note")} rows={2} />
             </Field>
           </div>
+
+          <h2 className="mt-6 font-heading text-sm font-bold uppercase tracking-[0.14em]">Invoice details</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Printed on every invoice: the payment block the customer pays into, and the terms shown above the signature.
+          </p>
+          <div className="mt-4 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Bank account no">
+                <Input value={values.bank_account_no || ""} onChange={set("bank_account_no")} />
+              </Field>
+              <Field label="Account name">
+                <Input value={values.bank_account_name || ""} onChange={set("bank_account_name")} />
+              </Field>
+              <Field label="Branch name">
+                <Input value={values.bank_branch || ""} onChange={set("bank_branch")} />
+              </Field>
+            </div>
+            <Field label="Terms & conditions" hint="One line each">
+              <Textarea value={values.terms || ""} onChange={set("terms")} rows={3} />
+            </Field>
+          </div>
         </section>
 
         <section className="panel p-5">
@@ -141,6 +174,12 @@ export default function Settings() {
             </p>
           </div>
         </section>
+      </div>
+
+      {showAdminTools && <ManualCategories />}
+
+      <div className="mt-4">
+        <StaffPermissions />
       </div>
     </div>
   );

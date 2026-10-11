@@ -11,7 +11,7 @@ import ExportButtons from "@/components/ExportButtons";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import StatusPill, { statusTone } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE, softDelete } from "@/lib/recycle";
 import { invoiceStats } from "@/lib/analytics";
 import { useSettings } from "@/lib/useSettings";
@@ -38,7 +38,7 @@ export default function Invoices() {
       if (to) query.invoice_date.$lte = to;
     }
     const [page, totals] = await Promise.all([
-      base44.entities.Invoice.filter(query, { sort: "-invoice_date", limit: 100 }),
+      db.Invoice.filter(query, { sort: "-invoice_date", limit: 100 }),
       invoiceStats({ from, to }).catch(() => null),
     ]);
     setRows(page?.items || []);
@@ -124,7 +124,9 @@ export default function Invoices() {
           emptyLabel="No invoices yet"
           emptyHint="Use New invoice to bill a customer."
           onRowClick={setActive}
-          actions={(row) => <RowActions onDelete={() => setPendingDelete(row)} />}
+          actions={(row) => (
+            <RowActions onView={() => setActive(row)} onDelete={() => setPendingDelete(row)} />
+          )}
         />
       </div>
 

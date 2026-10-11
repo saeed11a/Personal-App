@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { RotateCcw, Trash2 } from "lucide-react";
+import { AlertTriangle, RotateCcw, Trash2 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import KpiCard from "@/components/KpiCard";
 import DataTable from "@/components/DataTable";
@@ -122,6 +122,11 @@ export default function RecycleBin() {
             </div>
           )}
         />
+      </div>
+
+      <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs font-medium text-amber-700 dark:text-amber-300">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+        <p>Permanent delete removes the row from the database — it cannot be restored afterwards.</p>
       </div>
 
       <DeleteDialog

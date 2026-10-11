@@ -5,11 +5,12 @@ import KpiCard from "@/components/KpiCard";
 import DataTable from "@/components/DataTable";
 import RowActions from "@/components/RowActions";
 import DeleteDialog from "@/components/DeleteDialog";
+import RecordDetailDialog from "@/components/RecordDetailDialog";
 import ExportButtons from "@/components/ExportButtons";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import { Button } from "@/components/ui/button";
 import PurchaseForm from "@/components/forms/PurchaseForm";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE, softDelete } from "@/lib/recycle";
 import { useSettings } from "@/lib/useSettings";
 import { money, num, pairs, shortDate } from "@/lib/format";
@@ -25,6 +26,7 @@ export default function Purchases() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [viewing, setViewing] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -35,8 +37,8 @@ export default function Purchases() {
       if (to) query.purchase_date.$lte = to;
     }
     const [page, custom] = await Promise.all([
-      base44.entities.Purchase.filter(query, { sort: "-purchase_date", limit: 100 }),
-      base44.entities.RawCategory.filter(ALIVE, { limit: 100 }),
+      db.Purchase.filter(query, { sort: "-purchase_date", limit: 100 }),
+      db.RawCategory.filter(ALIVE, { limit: 100 }),
     ]);
     setRows(page?.items || []);
     setCategories(custom?.items || []);
@@ -121,9 +123,18 @@ export default function Purchases() {
           loading={loading}
           emptyLabel="No purchases yet"
           emptyHint="Record a purchase to increase raw stock and credit the supplier."
-          actions={(row) => <RowActions onDelete={() => setPendingDelete(row)} />}
+          actions={(row) => <RowActions onView={() => setViewing(row)} onDelete={() => setPendingDelete(row)} />}
         />
       </div>
+
+      <RecordDetailDialog
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title="Purchase"
+        subtitle={viewing?.item_name}
+        columns={columns}
+        row={viewing}
+      />
 
       <PurchaseForm open={formOpen} onOpenChange={setFormOpen} onSaved={load} customCategories={categories} />
       <DeleteDialog

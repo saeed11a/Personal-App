@@ -1,6 +1,9 @@
 #env
 .env
 .env.*
+# ...but the sandbox defaults and the example file are intentionally tracked.
+!.env.base44-defaults
+!.env.example
 
 # Logs
 /logs
@@ -35,3 +38,11 @@ dist-ssr
 .env
 .vite
 base44/.app.jsonc
+
+# Credentials and signing material — never commit.
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+service-account*.json

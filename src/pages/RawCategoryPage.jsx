@@ -6,10 +6,11 @@ import KpiCard from "@/components/KpiCard";
 import DataTable from "@/components/DataTable";
 import RowActions from "@/components/RowActions";
 import DeleteDialog from "@/components/DeleteDialog";
+import RecordDetailDialog from "@/components/RecordDetailDialog";
 import ExportButtons from "@/components/ExportButtons";
 import { Button } from "@/components/ui/button";
 import RawStockForm from "@/components/forms/RawStockForm";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE, softDelete } from "@/lib/recycle";
 import { findCategory } from "@/lib/rawCategories";
 import { useSettings } from "@/lib/useSettings";
@@ -26,12 +27,13 @@ export default function RawCategoryPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [viewing, setViewing] = useState(null);
 
   const load = async () => {
     setLoading(true);
     const [categoryPage, stockPage] = await Promise.all([
-      base44.entities.RawCategory.filter(ALIVE, { limit: 100 }),
-      base44.entities.RawStock.filter({ ...ALIVE, category: slug }, { sort: "-updated_date", limit: 100 }),
+      db.RawCategory.filter(ALIVE, { limit: 100 }),
+      db.RawStock.filter({ ...ALIVE, category: slug }, { sort: "-updated_date", limit: 100 }),
     ]);
     setCategories(categoryPage?.items || []);
     setRows(stockPage?.items || []);
@@ -117,6 +119,7 @@ export default function RawCategoryPage() {
           emptyHint="Use Add item to enter the first stock line."
           actions={(row) => (
             <RowActions
+              onView={() => setViewing(row)}
               onEdit={() => {
                 setEditing(row);
                 setFormOpen(true);
@@ -126,6 +129,15 @@ export default function RawCategoryPage() {
           )}
         />
       </div>
+
+      <RecordDetailDialog
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title="Stock line"
+        subtitle={viewing?.item_name}
+        columns={columns}
+        row={viewing}
+      />
 
       <RawStockForm
         open={formOpen}

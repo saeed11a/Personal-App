@@ -3,8 +3,11 @@ import { Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { money } from "@/lib/format";
 
-// Rectangular kata buttons: one per customer / supplier.
-export default function PartyGrid({ parties = [], balances, selectedId, onSelect, emptyLabel }) {
+// The kata buttons: one credit-card-style panel per customer / supplier, showing the
+// balance that is still owed. Tapping the card opens the person's full detail (last
+// transaction, date and time, and every invoice and payment); it also selects him for
+// the kata ledger underneath.
+export default function PartyGrid({ parties = [], balances, selectedId, onSelect, onOpen, emptyLabel }) {
   if (!parties.length) {
     return (
       <div className="panel px-6 py-10 text-center">
@@ -26,7 +29,10 @@ export default function PartyGrid({ parties = [], balances, selectedId, onSelect
           <button
             key={party.id}
             type="button"
-            onClick={() => onSelect(party)}
+            onClick={() => {
+              onSelect(party);
+              onOpen?.(party);
+            }}
             className={cn(
               "rounded-xl border p-4 text-left transition-all",
               selected
@@ -54,8 +60,11 @@ export default function PartyGrid({ parties = [], balances, selectedId, onSelect
                 {party.phone || party.product_details}
               </p>
             )}
-            <p className="mt-2 text-[11px] font-medium text-muted-foreground">
-              {entry.invoices || entry.purchases || 0} {entry.invoices ? "invoice(s)" : "purchase(s)"}
+            <p className="mt-2 flex items-center justify-between gap-2 text-[11px] font-medium text-muted-foreground">
+              <span>
+                {entry.invoices || entry.purchases || 0} {entry.invoices ? "invoice(s)" : "purchase(s)"}
+              </span>
+              <span className="text-brand">View details</span>
             </p>
           </button>
         );

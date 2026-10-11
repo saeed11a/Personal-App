@@ -1,4 +1,4 @@
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { todayISO } from "@/lib/format";
 
 // Every module deletes softly: the record keeps its place and links, is hidden from
@@ -18,6 +18,13 @@ export const MODULES = [
   { entity: "InvoiceLine", label: "Invoice Items", path: "/sales", name: (row) => `${row.invoice_number} · ${row.article_code}` },
   { entity: "Payment", label: "Payments", path: "/payments", name: (row) => `${row.party_name} · ${row.amount}` },
   { entity: "Roznamcha", label: "Roznamcha", path: "/roznamcha", name: (row) => [row.description || row.party_name || "Entry", row.amount].join(" · ") },
+  { entity: "Labour", label: "Labour", path: "/labour", name: (row) => row.name },
+  {
+    entity: "LabourProduction",
+    label: "Labour work",
+    path: "/labour",
+    name: (row) => [row.article_code || "Work", `${row.pairs_received || 0} prs`].join(" · "),
+  },
 ];
 
 export function moduleFor(entity) {
@@ -25,21 +32,21 @@ export function moduleFor(entity) {
 }
 
 export async function softDelete(entity, id) {
-  await base44.entities[entity].update(id, { is_deleted: true, deleted_date: todayISO() });
+  await db[entity].update(id, { is_deleted: true, deleted_date: todayISO() });
 }
 
 export async function restoreRecord(entity, id) {
-  await base44.entities[entity].update(id, { is_deleted: false });
+  await db[entity].update(id, { is_deleted: false });
 }
 
 export async function purgeRecord(entity, id) {
-  return base44.entities[entity].delete(id);
+  return db[entity].delete(id);
 }
 
 export async function listDeleted() {
   const groups = await Promise.all(
     MODULES.map(async (module) => {
-      const page = await base44.entities[module.entity].filter({ is_deleted: true }, { limit: 100 });
+      const page = await db[module.entity].filter({ is_deleted: true }, { limit: 100 });
       return (page?.items || []).map((record) => ({ ...record, _module: module, _key: `${module.entity}:${record.id}` }));
     })
   );

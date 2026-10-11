@@ -31,8 +31,10 @@ export default function DataTable({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate font-heading text-sm font-semibold">{cell(columns[0], row)}</p>
-                {columns[1] && <p className="mt-0.5 truncate text-xs text-muted-foreground">{cell(columns[1], row)}</p>}
+                {/* A cell may render its own block content, so the value sits in a div,
+                    not a paragraph — nesting a div in a <p> is invalid HTML. */}
+                <div className="truncate font-heading text-sm font-semibold">{cell(columns[0], row)}</div>
+                {columns[1] && <div className="mt-0.5 truncate text-xs text-muted-foreground">{cell(columns[1], row)}</div>}
               </div>
               {actions && <div className="flex shrink-0 items-center gap-1">{actions(row)}</div>}
             </div>

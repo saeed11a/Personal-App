@@ -5,11 +5,12 @@ import KpiCard from "@/components/KpiCard";
 import DataTable from "@/components/DataTable";
 import RowActions from "@/components/RowActions";
 import DeleteDialog from "@/components/DeleteDialog";
+import RecordDetailDialog from "@/components/RecordDetailDialog";
 import ExportButtons from "@/components/ExportButtons";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import { Button } from "@/components/ui/button";
 import ExpenseForm from "@/components/forms/ExpenseForm";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE, softDelete } from "@/lib/recycle";
 import { useSettings } from "@/lib/useSettings";
 import { money, shortDate } from "@/lib/format";
@@ -25,6 +26,7 @@ export default function Kharcha() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [viewing, setViewing] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -34,7 +36,7 @@ export default function Kharcha() {
       if (from) query.entry_date.$gte = from;
       if (to) query.entry_date.$lte = to;
     }
-    const page = await base44.entities.Roznamcha.filter(query, { sort: "-entry_date", limit: 100 });
+    const page = await db.Roznamcha.filter(query, { sort: "-entry_date", limit: 100 });
     setRows(page?.items || []);
     setLoading(false);
   };
@@ -61,7 +63,12 @@ export default function Kharcha() {
     { key: "entry_date", label: "Date", render: (row) => shortDate(row.entry_date) },
     { key: "description", label: "Expense", render: (row) => <span className="font-medium">{row.description}</span> },
     { key: "category", label: "Category", render: (row) => row.category || "—" },
-    { key: "amount", label: "Amount", numeric: true, render: (row) => <span className="font-semibold">{money(row.amount, settings.currency_symbol)}</span> },
+    {
+      key: "amount",
+      label: "Amount",
+      numeric: true,
+      render: (row) => <span className="font-semibold text-destructive">{money(row.amount, settings.currency_symbol)}</span>,
+    },
   ];
 
   const confirmDelete = async () => {
@@ -113,39 +120,54 @@ export default function Kharcha() {
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-        <DataTable
-          columns={columns}
-          rows={rows}
-          loading={loading}
-          emptyLabel="No expenses in this period"
-          emptyHint="Log diesel, wages, transport and other daily costs."
-          actions={(row) => (
-            <RowActions
-              onEdit={() => {
-                setEditing(row);
-                setFormOpen(true);
-              }}
-              onDelete={() => setPendingDelete(row)}
-            />
-          )}
-        />
+        <section>
+          <h2 className="mb-3 font-heading text-sm font-bold uppercase tracking-[0.14em]">Expense entries</h2>
+          <DataTable
+            columns={columns}
+            rows={rows}
+            loading={loading}
+            emptyLabel="No expenses in this period"
+            emptyHint="Log diesel, wages, transport and other daily costs."
+            actions={(row) => (
+              <RowActions
+                onView={() => setViewing(row)}
+                onEdit={() => {
+                  setEditing(row);
+                  setFormOpen(true);
+                }}
+                onDelete={() => setPendingDelete(row)}
+              />
+            )}
+          />
+        </section>
 
-        <section className="panel h-fit p-5">
-          <h2 className="font-heading text-sm font-bold uppercase tracking-[0.14em]">Spend by category</h2>
-          {(byCategory.length ? byCategory : []).length ? (
-            <ul className="mt-4 space-y-2">
-              {byCategory.map((entry) => (
-                <li key={entry.category} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-muted-foreground">{entry.category}</span>
-                  <span className="font-mono font-semibold">{money(entry.amount, settings.currency_symbol)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-4 text-sm text-muted-foreground">No expenses recorded yet.</p>
-          )}
+        <section>
+          <h2 className="mb-3 font-heading text-sm font-bold uppercase tracking-[0.14em]">Spend by category</h2>
+          <div className="panel h-fit p-5">
+            {byCategory.length ? (
+              <ul className="space-y-2">
+                {byCategory.map((entry) => (
+                  <li key={entry.category} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">{entry.category}</span>
+                    <span className="font-mono font-semibold text-destructive">{money(entry.amount, settings.currency_symbol)}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No expenses recorded yet.</p>
+            )}
+          </div>
         </section>
       </div>
+
+      <RecordDetailDialog
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title="Expense"
+        subtitle={viewing?.description}
+        columns={columns}
+        row={viewing}
+      />
 
       <ExpenseForm open={formOpen} onOpenChange={setFormOpen} initial={editing} onSaved={load} />
       <DeleteDialog

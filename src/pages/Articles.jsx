@@ -5,11 +5,12 @@ import KpiCard from "@/components/KpiCard";
 import DataTable from "@/components/DataTable";
 import RowActions from "@/components/RowActions";
 import DeleteDialog from "@/components/DeleteDialog";
+import RecordDetailDialog from "@/components/RecordDetailDialog";
 import ExportButtons from "@/components/ExportButtons";
 import StatusPill from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
 import ArticleForm from "@/components/forms/ArticleForm";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE, softDelete } from "@/lib/recycle";
 import { articleStockMap } from "@/lib/analytics";
 import { useSettings } from "@/lib/useSettings";
@@ -25,12 +26,13 @@ export default function Articles() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [viewing, setViewing] = useState(null);
 
   // The article list is populated from Uppers stock and refreshed on every load.
   const load = async () => {
     setLoading(true);
     const [page, map] = await Promise.all([
-      base44.entities.Article.filter(ALIVE, { sort: "code", limit: 500 }),
+      db.Article.filter(ALIVE, { sort: "code", limit: 500 }),
       articleStockMap().catch(() => new Map()),
     ]);
     let records = page?.items || [];
@@ -38,7 +40,7 @@ export default function Articles() {
     const known = new Set(records.map((article) => String(article.code).toUpperCase()));
     const missing = Array.from(map.values()).filter((entry) => entry.article_code && !known.has(entry.article_code));
     if (missing.length) {
-      await base44.entities.Article.bulkCreate(
+      await db.Article.bulkCreate(
         missing.map((entry) => ({
           code: entry.article_code,
           name: entry.article_code,
@@ -47,7 +49,7 @@ export default function Articles() {
           is_deleted: false,
         }))
       );
-      const refreshed = await base44.entities.Article.filter(ALIVE, { sort: "code", limit: 500 });
+      const refreshed = await db.Article.filter(ALIVE, { sort: "code", limit: 500 });
       records = refreshed?.items || records;
       toast({ title: "Articles synced from Uppers", description: `${missing.length} new article number(s) added.` });
     }
@@ -183,6 +185,7 @@ export default function Articles() {
           emptyHint="Article numbers appear here as soon as uppers stock is saved against them."
           actions={(row) => (
             <RowActions
+              onView={() => setViewing(row)}
               onEdit={() => {
                 setEditing(row);
                 setFormOpen(true);
@@ -192,6 +195,15 @@ export default function Articles() {
           )}
         />
       </div>
+
+      <RecordDetailDialog
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title={viewing?.code || "Article"}
+        subtitle={viewing?.name}
+        columns={columns}
+        row={viewing}
+      />
 
       <ArticleForm open={formOpen} onOpenChange={setFormOpen} initial={editing} onSaved={load} />
       <DeleteDialog

@@ -4,14 +4,28 @@
   "startCommand": "docker compose -f docker-compose.base44.yml up -d",
   "secrets": [
     {
-      "name": "VITE_BASE44_APP_ID",
-      "description": "Base44 app id of the hosted backend this frontend talks to. Find it in the Base44 editor URL: app.base44.com/apps/<app-id>/editor. Without it every /api call 404s and the app can only render the login screen.",
-      "requiredAtBoot": false
+      "name": "VITE_SUPABASE_PUBLISHABLE_KEY",
+      "description": "Publishable (anon) key for the existing Supabase project https://heqxvqgztkaixtgezbcw.supabase.co — Supabase dashboard > Project Settings > API keys. Public frontend configuration, safe in the web bundle, but must not be committed to the repo.",
+      "requiredAtBoot": false,
+      "generatedForDevelopment": false
     },
     {
-      "name": "VITE_BASE44_APP_BASE_URL",
-      "description": "Base URL of your published Base44 app (frontend + /api backend share this origin), e.g. https://<app-id>.base44.app, with no trailing slash. Vite proxies /api to it. Without it the app logs '[base44] No Base44 backend configured' and no data loads.",
-      "requiredAtBoot": false
+      "name": "SUPABASE_SERVICE_ROLE_KEY",
+      "description": "Supabase service_role key — server-side only. Needed to provision the initial administrator, inspect RLS and run privileged maintenance. Must never be shipped to web, APK or EXE.",
+      "requiredAtBoot": false,
+      "generatedForDevelopment": false
+    },
+    {
+      "name": "SUPABASE_DB_URL",
+      "description": "Supabase Postgres connection string (pooler, includes the database password) — used from the sandbox to read the existing schema and apply additive migrations + RLS policies. Server-side only; never shipped to web, APK or EXE.",
+      "requiredAtBoot": false,
+      "generatedForDevelopment": false
+    },
+    {
+      "name": "SUPABASE_ACCESS_TOKEN",
+      "description": "Supabase personal access token — used from the sandbox to deploy the admin-users Edge Function through the Management API. Server-side only; never committed and never printed (it lives in /run/base44/app.env).",
+      "requiredAtBoot": false,
+      "generatedForDevelopment": false
     }
   ]
 }

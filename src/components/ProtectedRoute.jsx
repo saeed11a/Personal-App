@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
@@ -10,7 +10,16 @@ const DefaultFallback = () => (
 );
 
 export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthenticatedElement }) {
-  const { isAuthenticated, isLoadingAuth, authChecked, authError, checkUserAuth } = useAuth();
+  const {
+    isAuthenticated,
+    isLoadingAuth,
+    authChecked,
+    authError,
+    checkUserAuth,
+    pinRequired,
+    pinSetupRequired,
+    pinNotIssued,
+  } = useAuth();
 
   useEffect(() => {
     if (!authChecked && !isLoadingAuth) {
@@ -31,6 +40,22 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
 
   if (!isAuthenticated) {
     return unauthenticatedElement;
+  }
+
+  // Signed in but no PIN on the account yet: an administrator sets their own on
+  // /setup-pin, anyone else waits for one to be issued. Either way the app itself
+  // stays closed — never silently reachable without a PIN.
+  if (pinSetupRequired) {
+    return <Navigate to="/setup-pin" replace />;
+  }
+
+  if (pinNotIssued) {
+    return <Navigate to="/pin-not-issued" replace />;
+  }
+
+  // Signed in but the five-digit PIN has not been entered for this session.
+  if (pinRequired) {
+    return <Navigate to="/unlock" replace />;
   }
 
   return <Outlet />;

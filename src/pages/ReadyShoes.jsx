@@ -5,10 +5,11 @@ import KpiCard from "@/components/KpiCard";
 import DataTable from "@/components/DataTable";
 import RowActions from "@/components/RowActions";
 import DeleteDialog from "@/components/DeleteDialog";
+import RecordDetailDialog from "@/components/RecordDetailDialog";
 import ExportButtons from "@/components/ExportButtons";
 import { Button } from "@/components/ui/button";
 import ReadyShoeForm from "@/components/forms/ReadyShoeForm";
-import { base44 } from "@/api/base44Client";
+import { db } from "@/lib/entities";
 import { ALIVE, softDelete } from "@/lib/recycle";
 import { articleStockMap } from "@/lib/analytics";
 import { useSettings } from "@/lib/useSettings";
@@ -25,12 +26,13 @@ export default function ReadyShoes() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [viewing, setViewing] = useState(null);
 
   const load = async () => {
     setLoading(true);
     const [batches, articlePage, stats] = await Promise.all([
-      base44.entities.ReadyShoe.filter(ALIVE, { sort: "-updated_date", limit: 100 }),
-      base44.entities.Article.filter(ALIVE, { sort: "code", limit: 500 }),
+      db.ReadyShoe.filter(ALIVE, { sort: "-updated_date", limit: 100 }),
+      db.Article.filter(ALIVE, { sort: "code", limit: 500 }),
       articleStockMap().catch(() => new Map()),
     ]);
     setRows(batches?.items || []);
@@ -142,6 +144,7 @@ export default function ReadyShoes() {
           emptyHint="Record a production run or add cartons by hand."
           actions={(row) => (
             <RowActions
+              onView={() => setViewing(row)}
               onEdit={() => {
                 setEditing(row);
                 setFormOpen(true);
@@ -151,6 +154,15 @@ export default function ReadyShoes() {
           )}
         />
       </div>
+
+      <RecordDetailDialog
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title="Ready shoes batch"
+        subtitle={viewing?.article_code}
+        columns={columns}
+        row={viewing}
+      />
 
       <ReadyShoeForm
         open={formOpen}

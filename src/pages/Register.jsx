@@ -10,6 +10,7 @@ import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { usesSupabaseAuth } from "@/lib/authMode";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -70,6 +71,28 @@ export default function Register() {
   const handleGoogle = () => {
     base44.auth.loginWithProvider("google", safeReturnTo());
   };
+
+  // Accounts (and their five-digit PIN) are issued by an administrator — this ERP
+  // deliberately has no public self-registration.
+  if (usesSupabaseAuth) {
+    return (
+      <AuthLayout
+        icon={UserPlus}
+        title="Accounts are created by an administrator"
+        subtitle="Ask your administrator for an account"
+        footer={
+          <Link to="/login" className="text-primary font-medium hover:underline">
+            Back to log in
+          </Link>
+        }
+      >
+        <p className="text-sm text-center text-muted-foreground">
+          This ERP does not allow self sign-up. Your administrator sets up your
+          account, your access rights and your five-digit PIN.
+        </p>
+      </AuthLayout>
+    );
+  }
 
   if (showOtp) {
     return (

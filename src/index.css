@@ -124,8 +124,61 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Printing
+   ---------------------------------------------------------------------------
+   Paper size defaults to A4. The invoice print view may opt into receipt-size
+   paper by adding `.print-receipt` to its root (see InvoicePrintView), which
+   switches the named `receipt` page rule on. */
+
+@page {
+  size: A4 portrait;
+  margin: 14mm 12mm;
+}
+
+/* Receipt paper. CSS only accepts a length pair here (`80mm auto` is invalid and
+   is dropped by the parser), so the roll's width is fixed and the page is long
+   enough to hold a full invoice without splitting it. The exact roll length is
+   settled with the invoice redesign. */
+@page receipt {
+  size: 80mm 297mm;
+  margin: 4mm;
+}
+
+.print-receipt {
+  page: receipt;
+}
+
+/* The invoice has teal header/footer bands and a striped table: without this the
+   print dialog drops the background colours and the design prints as plain text. */
+.invoice-print {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
 @media print {
   .no-print {
     display: none !important;
+  }
+
+  /* An invoice open in its dialog prints on its own: the app behind the dialog is
+     hidden, so no navigation, background or screen-only controls reach the page. */
+  html.printing-invoice #root {
+    display: none !important;
+  }
+
+  /* Column headings repeat on every page, and a row or the totals block is never
+     split across a page break. */
+  thead {
+    display: table-header-group;
+  }
+
+  tr,
+  .print-avoid-break {
+    break-inside: avoid;
+  }
+
+  .print-page-break {
+    break-before: page;
   }
 }

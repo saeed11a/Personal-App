@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { createSettings, loadSettings, updateSettings } from "@/lib/settingsApi";
 
 export const DEFAULT_SETTINGS = {
   company_name: "HIKER Shoes Factory",
@@ -15,6 +15,10 @@ export const DEFAULT_SETTINGS = {
   phone: "",
   email: "",
   footer_note: "",
+  bank_account_no: "",
+  bank_account_name: "",
+  bank_branch: "",
+  terms: "",
 };
 
 export function useSettings() {
@@ -25,8 +29,7 @@ export function useSettings() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const page = await base44.entities.Settings.filter({}, { limit: 1 });
-      const record = page?.items?.[0];
+      const record = await loadSettings();
       if (record) {
         setRecordId(record.id);
         setSettings({ ...DEFAULT_SETTINGS, ...record });
@@ -34,6 +37,12 @@ export function useSettings() {
         setRecordId(null);
         setSettings(DEFAULT_SETTINGS);
       }
+    } catch {
+      // Settings are presentation defaults, not business data: a backend that
+      // cannot answer (no record yet, or no permission to read the row) must not
+      // take the screen down. The shipped defaults already cover every field.
+      setRecordId(null);
+      setSettings(DEFAULT_SETTINGS);
     } finally {
       setLoading(false);
     }
@@ -46,9 +55,9 @@ export function useSettings() {
   const save = useCallback(
     async (values) => {
       if (recordId) {
-        await base44.entities.Settings.update(recordId, values);
+        await updateSettings(recordId, values);
       } else {
-        const created = await base44.entities.Settings.create({ ...DEFAULT_SETTINGS, ...values });
+        const created = await createSettings({ ...DEFAULT_SETTINGS, ...values });
         setRecordId(created.id);
       }
       await load();
