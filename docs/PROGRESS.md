@@ -15,8 +15,8 @@ not run, or not proven here.
 | 8 | Per-user menu/action permissions | **Partial** — deny-by-default RLS per module/action (`is_admin()` / `has_permission()`) and the access levels are now assignable per employee (Phase 7); the sidebar and page-level gating still show every menu item to everyone |
 | 9 | ERP business-logic regression | **In progress** — settings, payments, roznamcha, kharcha and the new Labour module now read and write Supabase through the 0006 posting functions. The dashboard, raw stock, ready shoes, articles, production, purchases, invoices/sales, customers, suppliers, reports and the recycle bin still read Base44 |
 | 10 | Audit logging + session security | **Partial** — `audit_logs` table (append-only, admin-read, no client delete) plus `log_audit()`; `pin_setup`, `pin_setup_denied`, `pin_change`, `pin_change_denied`, `pin_verify` and `pin_locked` events are recorded, and no PIN, hash or key is ever written to a row. Login/staff events still to come |
-| 11 | Android APK workflow | **Partial** — existing workflow preserved; dev branches added to triggers; Supabase variables wired (warn-only during migration). **APK not built or verified here** (runners are on GitHub) |
-| 12 | Windows EXE workflow | **Blocked/broken** — requires `electron/` and `electron-builder.yml`, absent from the source, so it always fails at step 7. Not attempted yet |
+| 11 | Android APK workflow | **Repaired, not run** — dev branches and now `pull_request` trigger it; Supabase variables wired (warn-only during migration). Fixed a real breakage: a *second* `npm install --no-save` (`@capacitor/assets`) pruned `@capacitor/*`, so `npx cap sync` failed — every Capacitor package now installs in one command. **APK not built or verified here** (runners are on GitHub) |
+| 12 | Windows EXE workflow | **Repaired, not run** — the missing desktop shell now exists (`electron/main.cjs`, `electron/preload.cjs`, `electron-builder.yml`), so step 7 passes; `pull_request` added to triggers. **EXE not built or verified here** (runners are on GitHub) |
 | 13 | Web/APK/EXE compatibility | **Not started** |
 | 14 | Testing and acceptance | **Partial** — environment, build, UI and schema checks done (below). Auth, permission, ERP and build suites: NOT VERIFIED |
 | 15 | Final delivery and documentation | **Partial** — audit, migration runbook and this report delivered |
@@ -102,7 +102,7 @@ and there is none. Their source files are unmodified, checked by diff rather tha
 2. Audit coverage for login, staff and permission events.
 3. Export the Base44 records, import them, reconcile counts and relationships, then move the app's data layer
    over module by module behind a compatibility layer.
-4. Repair the desktop (Electron) build; run both build workflows on GitHub and confirm artifacts.
+4. Run both build workflows on GitHub — they now trigger on `pull_request` as well as on push — and confirm the APK/EXE artifacts.
 
 ## Phase: top bar, account menu and invoice print groundwork
 

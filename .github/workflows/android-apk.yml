@@ -18,6 +18,18 @@ on:
       - "vite.config.js"
       - "capacitor.config.json"
       - ".github/workflows/android-apk.yml"
+  # Also build on pull requests, so a change is verified before it reaches main.
+  # Same path filter: a PR that touches none of these files is skipped.
+  pull_request:
+    paths:
+      - "src/**"
+      - "public/**"
+      - "resources/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - "capacitor.config.json"
+      - ".github/workflows/android-apk.yml"
 
 permissions:
   contents: read
@@ -59,7 +71,11 @@ jobs:
         run: npm install
 
       - name: "6. Install Capacitor"
-        run: npm install --no-save @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+        # One install for every build tool, and the only one: a second
+        # `npm install --no-save` later in the job prunes the packages this one
+        # added (npm rebuilds the tree from package.json and drops them as
+        # extraneous), which breaks `npx cap sync`.
+        run: npm install --no-save @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/assets@3
 
       - name: "7. Build HIKER ERP"
         run: npm run build -- --base=./
@@ -81,7 +97,6 @@ jobs:
         # resources/README.md). --assetPath is explicit so the folder cannot be
         # guessed wrong, and the icon background matches the mark's own off-white.
         run: |
-          npm install --no-save @capacitor/assets
           npx @capacitor/assets generate --android --assetPath resources \
             --iconBackgroundColor '#F4F4F4' --iconBackgroundColorDark '#F4F4F4' \
             --splashBackgroundColor '#F4F4F4' --splashBackgroundColorDark '#16191f'
