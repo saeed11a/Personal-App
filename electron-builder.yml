@@ -1,0 +1,37 @@
+# Packaging config for the Windows installer
+# (.github/workflows/windows-exe.yml runs `electron-builder --config electron-builder.yml`).
+#
+# Only the built web app (dist/) and the Electron shell (electron/) ship. The
+# renderer is a static Vite build with no runtime dependency, so node_modules are
+# deliberately left out — which also keeps server-side values (the service_role
+# key, the database URL) out of the installer.
+appId: com.hiker.factoryerp
+productName: HIKER Factory ERP
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+
+extraMetadata:
+  # The root package.json is the web app's manifest and carries no Electron entry
+  # point, so the packaged copy points at the shell instead.
+  main: electron/main.cjs
+  author: HIKER Shoes Factory
+
+win:
+  target:
+    - nsis
+  icon: build/icon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: HIKER Factory ERP
