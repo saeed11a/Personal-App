@@ -69,3 +69,20 @@ which serves the UI at `http://localhost:3000`.
   usable sandbox preview needs the two secrets **and** at least one deploy from the dashboard
   (`base44 dashboard open`, see `README.md`); before that the app can only render the login
   screen and the console shows `Request failed with status code 404`.
+
+## App users, roles and the auth endpoints
+
+- App users exist only in the hosted backend and are created through the app's own email +
+  one-time-code sign-up: `base44.auth.register({ email, password })` sends a code, then
+  `base44.auth.verifyOtp({ email, otpCode })` returns the access token (`src/pages/Register.jsx`).
+  A repeated `register` for the same email returns the same user id and re-sends a fresh code,
+  so the UI flow stays usable after an expired code.
+- The `/api/apps/<app-id>/auth/*` endpoints answer normally even for an app that has never been
+  deployed: `login` reports `Invalid email or password` for an unknown account and
+  `Please verify your email before logging in` for a registered-but-unverified one. Only the
+  `public-settings` and `entities` endpoints carry the `403 not_deployed` gate, so auth problems
+  and "app not deployed" problems are distinguishable.
+- `role` (`admin` | `user`, required) lives on the `User` entity in `base44/entities/User.jsonc`.
+  It is assigned in the Base44 dashboard (Dashboard → App Users → Role), never from the app code;
+  there is no in-app way to grant admin. The only place the app reads it is the "Admin Note"
+  block on `src/lib/PageNotFound.jsx`.
