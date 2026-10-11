@@ -60,3 +60,12 @@ which serves the UI at `http://localhost:3000`.
   `curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/`, and
   `docker compose -f docker-compose.base44.yml logs -f web` (a healthy boot shows
   `VITE v8.x ready`; a configured backend additionally logs `[base44] Proxy enabled: /api -> ...`).
+- The two env values above are necessary but not sufficient: the hosted backend only answers
+  once the app has been deployed. The SDK always calls
+  `/api/apps/public/prod/public-settings/by-id/<app-id>` (the `prod` segment is hardcoded, and
+  there is no dev/staging variant), and for an app that has never been published it answers
+  `403` with `extra_data.reason = "not_deployed"` ("This app is not yet available"). Check with
+  `curl -s https://app.base44.com/api/apps/public/prod/public-settings/by-id/<app-id>`. So a
+  usable sandbox preview needs the two secrets **and** at least one deploy from the dashboard
+  (`base44 dashboard open`, see `README.md`); before that the app can only render the login
+  screen and the console shows `Request failed with status code 404`.
